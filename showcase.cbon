@@ -1,0 +1,59 @@
+/** Enum Definition */
+enum Status { Pending, Active, Inactive, Archived };
+
+/** Regexp Definition */
+regexp Code /^[A-Z0-9]{5}$/;
+
+/** Accept Definition */
+accept Region { "US", "EU", "JP" };
+
+/** Range Definition */
+range Temperature<decimal> { [-273.15, 1000.0], [2000.0, inf) };
+
+/** Class Definition */
+class Base {
+    required string type;
+    required datetime created_at;
+    const type "Base";
+}
+
+class Showcase extends Base {
+    required int id;
+    optional string label1;
+    optional string label2;
+    choose string label3;
+    required binary raw_data1;
+    required binary raw_data2;
+    choose boolean flag;
+    required Status | Region category;
+    optional array<Code> tags;
+    optional int version;
+    
+    exclusive label3, flag;
+    
+    const type "Showcase";
+    default version 1;
+}
+
+/** Schema Root */
+schema Showcase return string;
+
+/** Data Value Instance */
+Showcase {
+    created_at: 1970-01-01 09:00:00,
+    id: 100,
+    label1: "Full Syntax Test",
+    label2:
+      | Text1
+      | Text2
+      ,
+    raw_data1: X'FFAABB0011',
+    raw_data2:
+      $ SGVsbG8gQ0JPTiEgVGhpcyBpcyBhIGJpbmFyeSBkYXRh
+      $ IHNob3djYXNlIGV4YW1wbGUu==
+      ,
+    flag: true,
+    category: Status.Active,
+    tags: array<Code> { "ABCDE", "12345" },
+    version: 2,
+}
