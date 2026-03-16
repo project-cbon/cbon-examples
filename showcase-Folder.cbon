@@ -5,7 +5,7 @@
 regexp UuidPattern /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 @note(ファイル名に使用可能な文字 POSIX互換)
-regexp FileNamePattern /^[^\\/:\*\?"<>\|]+$/;
+regexp FileNamePattern /^[^\\\/:\*\?"<>\|]+$/;
 
 @note(MimeTypeの書式 例: text/plain, application/pdf)
 regexp MimeType /^[\w-]+\/[\w-]+(\.[\w-]+)*$/;
@@ -63,12 +63,18 @@ class Shortcut extends FSBase {
 }
 
 @note(アーカイブ)
-class Archive extends File {
+class Archive extends FSBase {
   required MimeType mime_type;
   optional int size_bytes;
   
   @length(0..255)
   optional array<File | Folder | Shortcut | Archive> items;
+}
+
+@note(PNG画像ファイル)
+class PngImageFile extends File {
+  @override
+  const mime_type "image/png";
 }
 
 schema Folder;
@@ -111,12 +117,11 @@ Folder {
       mime_type: "application/zip",
       size_bytes: 43,
       items: array<File | Folder | Shortcut | Archive> {
-        File {
+        PngImageFile {
           uuid: "c1902c38-c3cf-43c8-8b7f-dbb91b8b5e1f",
           name: "simple.png",
           created_at: 1970-01-01 00:00:00,
           modified_at: 1970-01-01 00:00:00,
-          mime_type: "image/png",
           size_bytes: 266,
           raw_data:
             $ iVBORw0KGgoAAAANSUhEUgAAAEYAAABECAYAAAA85kOPAAAAAXNSR0IArs4c6QAAAARnQU1BAACx
