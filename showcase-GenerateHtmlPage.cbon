@@ -1,0 +1,50 @@
+#!cbon-process
+
+## Schema
+define
+| <!DOCTYPE html>
+| <html lang="ja">
+| <head>
+|     <meta charset="UTF-8">
+|     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+|     <title>@(title)</title>
+|     <style type="text/css">@(style)</style>
+| </head>
+| <body>
+|     @(content)
+| </body>
+| </html>
+as HtmlTemplate;
+
+@return-only
+class PageTitle {
+  required string value;
+};
+
+@return-only
+class PageStyleSheet {
+  required string value;
+};
+
+@return-only
+class PageContent {
+  required array<string> sections;
+}
+
+@export(title)
+output Html<PageTitle> template "@(value)";
+
+@export(style)
+output Html<PageStyleSheet> template "@(value)";
+
+@export(content)
+output Html<PageContent> template "<section>@(sections)</section>";
+
+process GenerateHtmlPage(string) return(PageTitle, PageStyleSheet, PageContent) format Html wrap HtmlTemplate;
+process GenerateTextPage(string) return(PageTitle, PageContent) format Text;
+schema GenerateHtmlPage;
+schema GenerateTextPage;
+
+
+## Execution
+GenerateHtmlPage("通販サイトのサンプルページ")
