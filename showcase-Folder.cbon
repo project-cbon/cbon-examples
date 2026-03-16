@@ -1,0 +1,136 @@
+#!cbon
+
+## Schema
+@note(UUIDのパターン)
+regexp UuidPattern /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+@note(ファイル名に使用可能な文字 POSIX互換)
+regexp FileNamePattern /^[^\\/:\*\?"<>\|]+$/;
+
+@note(MimeTypeの書式 例: text/plain, application/pdf)
+regexp MimeType /^[\w-]+\/[\w-]+(\.[\w-]+)*$/;
+
+@note(圧縮率の定義)
+range CompressionRatio<decimal> { [0.0, 1.0) }
+
+@note(ファイル属性)
+enum FilePermission { ReadOnly, Hidden, System, Archive }
+
+@abstruct
+@note(すべてのエントリの基底クラス)
+class FSBase {
+  choose UuidPattern uuid;
+  choose FileNamePattern name;
+  required datetime created_at;
+  optional datetime modified_at;
+  
+  @unique
+  optional array<FilePermission> permissions;
+  
+  @note(uuidかnameのどちらかが必須)
+  oneof uuid, name;
+  default permissions { };
+}
+
+@root
+@note(フォルダ)
+class Folder extends FSBase {
+  @length(0..255)
+  required array<File | Folder | Shortcut | Archive> items;
+}
+
+@note(通常のファイル)
+class File extends FSBase {
+  optional MimeType mime_type;
+  optional int size_bytes;
+  choose string text_data;
+  choose binary raw_data;
+  required CompressionRatio compression_level;
+  
+  @note(text_dataかraw_dataのどちらか一方だけ必須)
+  exclusive text_data, raw_data;
+  default mime_type "application/octet-stream";
+  default compression_level 0.0;
+}
+
+@note(ショートカット)
+class Shortcut extends FSBase {
+  @reference(FSBase.name or FSBase.uuid delimiter "/")
+  required string path;
+  optional boolean hard_link;
+  
+  default hard_link false;
+}
+
+@note(アーカイブ)
+class Archive extends File {
+  required MimeType mime_type;
+  optional int size_bytes;
+  
+  @length(0..255)
+  optional array<File | Folder | Shortcut | Archive> items;
+}
+
+schema Folder;
+
+
+## Data
+Folder {
+  name: "root",
+  created_at: 1970-01-01 00:00:00,
+  modified_at: 1970-01-01 00:00:00,
+  items: array<File | Folder | Shortcut | Archive> {
+    File {
+      uuid: "4e1815ae-a06d-4233-97a5-cb95298c41d2",
+      name: "README.md",
+      created_at: 1970-01-01 00:00:00,
+      modified_at: 1970-01-01 00:00:00,
+      mime_type: "text/markdown",
+      size_bytes: 4331,
+      text_data:
+        | # CBON
+        | ...
+        ,
+    },
+    Folder {
+      name: "docs",
+      created_at: 1970-01-01 00:00:00,
+      modified_at: 1970-01-01 00:00:00,
+      items: array<File | Folder | Shortcut | Archive> {},
+    },
+    Shortcut {
+      name: "readme.lnk",
+      created_at: 1970-01-01 00:00:00,
+      modified_at: 1970-01-01 00:00:00,
+      path: "/README.md",
+    },
+    Archive {
+      name: "sample.zip",
+      created_at: 1970-01-01 00:00:00,
+      modified_at: 1970-01-01 00:00:00,
+      mime_type: "application/zip",
+      size_bytes: 43,
+      items: array<File | Folder | Shortcut | Archive> {
+        File {
+          uuid: "c1902c38-c3cf-43c8-8b7f-dbb91b8b5e1f",
+          name: "simple.png",
+          created_at: 1970-01-01 00:00:00,
+          modified_at: 1970-01-01 00:00:00,
+          mime_type: "image/png",
+          size_bytes: 266,
+          raw_data:
+            $ iVBORw0KGgoAAAANSUhEUgAAAEYAAABECAYAAAA85kOPAAAAAXNSR0IArs4c6QAAAARnQU1BAACx
+            $ jwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACfSURBVHhe7dAhEQAgAMBA2hCT6CBwcGvw4s3k
+            $ xl5z8xtv4DImGBOMCcYEY4IxwZhgTDAmGBOMCcYEY4IxwZhgTDAmGBOMCcYEY4IxwZhgTDAmGBOM
+            $ CcYEY4IxwZhgTDAmGBOMCcYEY4IxwZhgTDAmGBOMCcYEY4IxwZhgTDAmGBOMCcYEY4IxwZhgTDAm
+            $ GBOMCcYEY4IxwZhgTDAmGBMO4eEcQEI8SdAAAAAASUVORK5CYII=
+            ,
+          compression_level: 0.21
+        },
+      },
+      permissions: array<FilePermission> {
+        FilePermission.ReadOnly,
+      },
+    },
+  },
+}
