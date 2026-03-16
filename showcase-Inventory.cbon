@@ -1,0 +1,65 @@
+#!cbon-fruits
+
+## Schema
+@note(製品情報の定義)
+class Product {
+  required string sku;
+  required string name;
+  optional string category;
+  required decimal price;
+
+  @note(価格に通貨単位のサフィックスを付与)
+  suffix price "円";
+  default category "一般";
+}
+
+@note(データが存在しない番兵として利用)
+define Product { sku: "NONE", name: "未登録製品", price: 0.0 } as SentinelProduct;
+
+@note(キーと値のペアを持つエントリ形式を宣言)
+entries FruitCatalog<string, Product>;
+
+@note(複雑な型に短い名前を付ける)
+alias array<FruitCatalog> as CatalogCollection;
+
+@root
+@note(在庫管理)
+class Inventory {
+  required array<Product> stock_list;
+  required CatalogCollection master_data;
+
+  @note(リストの末尾に自動的に番兵データを追加する)
+  append master_data {
+    FruitCatalog { "SENTINEL", SentinelProduct },
+  };
+}
+
+schema Inventory;
+
+
+## Data
+Inventory {
+  stock_list: array<Product> {
+    Product {
+      sku: "APL-001",
+      name: "サンふじ",
+      category: "リンゴ",
+      price: 250.0,
+    },
+    Product {
+      sku: "ORG-002",
+      name: "温州みかん",
+      price: 100.0,
+    },
+  },
+  master_data: CatalogCollection {
+    FruitCatalog {
+      "APL-001",
+      Product { sku: "APL-001", name: "サンふじ", price: 250.0 },
+    },
+    FruitCatalog {
+      "ORG-002",
+      Product { sku: "ORG-002", name: "温州みかん", price: 100.0 },
+    },
+  },
+}
