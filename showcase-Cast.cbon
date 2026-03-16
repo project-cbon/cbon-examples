@@ -1,0 +1,11 @@
+#!cbon-process
+
+## Schema
+@root
+@note(任意の型変換)
+process Cast(type-variables Data, type-variables T) return(T);
+schema Cast;
+
+
+## Execution
+Cast("10.11 + 30 / 2", type-reference decimal)
